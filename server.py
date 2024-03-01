@@ -14,7 +14,7 @@ def recv_file(dst_ip):
             continue
         # each raw is: seq num@--data--
         # each ack is: ACK@seq num
-        seq_num, buf = pkt[Raw].split('@')
+        seq_num, buf = pkt[Raw].decode().split('@')
         if seq_num == seq + 1:
             data += buf
             seq = seq_num + len(buf) - 1
@@ -28,11 +28,12 @@ def recv_file(dst_ip):
 
 
 def establish_connection():
-    syn_pkt = sniff(lfilter=lambda p: ICMP in p and Raw in p and p[Raw] == 'Syn', count=1)[0]
+    syn_pkt = sniff(lfilter=lambda p: ICMP in p and Raw in p and p[Raw] == b'Syn', count=1)[0]
+    syn_pkt.show()
     dst_ip = syn_pkt[IP].src
-    syn_ack_pkt = IP(dst=dst_ip) / ICMP()
+    syn_ack_pkt = IP(dst=dst_ip) / ICMP() / Raw(b"Syn Ack")
     est_pkt = sr1(syn_ack_pkt)
-    return ICMP in p and Raw in p and p[Raw] == 'Ack', dst_ip
+    return ICMP in p and Raw in p and p[Raw] == b'Ack', dst_ip
 
 
 def main():
